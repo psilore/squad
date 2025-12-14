@@ -9,12 +9,12 @@ LABEL org.opencontainers.image.title="Squad GitHub Reporter" \
 
 # Install dependencies
 RUN apk add --no-cache \
-    bash \
-    git \
-    curl \
-    jq \
-    coreutils \
-    github-cli \
+    bash=5.3.3-r1 \
+    git=2.52.0-r0 \
+    curl=8.17.0-r1 \
+    jq=1.8.1-r0 \
+    coreutils=9.8-r1 \
+    github-cli=2.83.0-r1 \
     && rm -rf /var/cache/apk/* \
     && rm -rf /tmp/*
 
