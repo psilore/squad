@@ -1,0 +1,60 @@
+---
+name: 'Squad GitHub Reporter'
+description: |
+  Generate detailed reports about GitHub organizations or teams including repos,
+  vulnerabilities, PRs, and users
+author: 'psilore'
+
+branding:
+  icon: 'file-text'
+  color: 'blue'
+
+inputs:
+  owner:
+    description: 'GitHub organization or owner name'
+    required: true
+  team-slug:
+    description: 'Optional team slug within the organization. If not provided, reports on entire organization'
+    required: false
+    default: ''
+  github-token:
+    description: 'GitHub token with appropriate permissions (repo, read:org, read:user)'
+    required: true
+  since-date:
+    description: 'Start date for the report range (YYYY-MM-DD). Defaults to first day of previous month'
+    required: false
+    default: ''
+  until-date:
+    description: 'End date for the report range (YYYY-MM-DD). Defaults to today'
+    required: false
+    default: ''
+  report-path:
+    description: 'Path where the report will be saved'
+    required: false
+    default: './report'
+  alerts:
+    description: 'Include Dependabot alerts scanning (requires security permissions)'
+    required: false
+    default: 'true'
+  users:
+    description: 'Include user/member data collection'
+    required: false
+    default: 'true'
+  pull-requests:
+    description: 'Include open pull requests tracking'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  env:
+    GITHUB_TOKEN: ${{ inputs.github-token }}
+    INPUT_OWNER: ${{ inputs.owner }}
+    INPUT_TEAM_SLUG: ${{ inputs.team-slug }}
+    INPUT_SINCE_DATE: ${{ inputs.since-date }}
+    INPUT_UNTIL_DATE: ${{ inputs.until-date }}
+    INPUT_REPORT_PATH: ${{ inputs.report-path }}
+    INPUT_ALERTS: ${{ inputs.alerts }}
+    INPUT_USERS: ${{ inputs.users }}
+    INPUT_PRS: ${{ inputs.pull-requests }}

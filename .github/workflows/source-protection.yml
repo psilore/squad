@@ -1,0 +1,56 @@
+---
+name: Source protection
+"on":
+  workflow_call:
+    inputs:
+      commitlint-config:
+        required: false
+        type: string
+        description: "The path to the commitlint configuration file (optional)"
+        default: '.github/commitlint.config.cjs'
+      yamllint-config:
+        required: false
+        type: string
+        description: "The path to the yamllint configuration file (optional)"
+        default: '.github/.yamllintrc.yml'
+permissions:
+  contents: 'read'
+  pull-requests: 'read'
+  checks: 'write'
+jobs:
+  validate-commits:
+    name: Validate Commits
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: commitlint
+        uses: >-
+          wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed
+        with:
+          configFile: >-
+            ${{
+              inputs.commitlint-config ||
+              '.github/commitlint.config.cjs'
+            }}
+
+  validate-yaml:
+    name: Validate YAML
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: yamllint
+        run: |
+          CONFIG="${{ inputs.yamllint-config }}"
+          if [ -z "$CONFIG" ]; then
+            CONFIG=".github/yamllintrc.yml"
+          fi
+          docker run --rm -v $(pwd):/data cytopia/yamllint . -c "$CONFIG"
+          if [ $? -eq 0 ]; then
+            echo "Lint free! 🎉"
+          fi

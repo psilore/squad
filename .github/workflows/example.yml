@@ -1,0 +1,86 @@
+---
+name: 📋Squad Report Example
+
+on:
+  # Run on schedule (first day of every month)
+  schedule:
+    - cron: '0 0 1 * *'
+
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      owner:
+        description: 'GitHub organization or owner'
+        required: true
+      team-slug:
+        description: 'Team slug (optional)'
+        required: false
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+    name: Generate Squad Report
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+
+      - name: Generate Squad Report
+        id: squad
+        uses: psilore/squad@main
+        with:
+          owner: ${{ github.event.inputs.owner || 'your-org-name' }}
+          team-slug: ${{ github.event.inputs.team-slug || '' }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          report-path: './report'
+
+      - name: Display Report in Summary
+        run: |
+          echo "## 📊 Squad Report Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Add quick stats
+          echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔒 Total Alerts | ${{ steps.squad.outputs.total-alerts }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🚨 Critical Alerts | ${{ steps.squad.outputs.critical-alerts }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📦 Total Repos | ${{ steps.squad.outputs.total-repos }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 👥 Total Users | ${{ steps.squad.outputs.total-users }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Add full report if exists
+          if [ -f "${{ steps.squad.outputs.report-path }}/report_summary.md" ]; then
+            echo "---" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            cat "${{ steps.squad.outputs.report-path }}/report_summary.md" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload Report as Artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: squad-report-${{ github.run_number }}
+          path: report/
+          retention-days: 30
+
+      - name: Comment PR with Report (if in PR context)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = '${{ steps.squad.outputs.report-path }}/report_summary.md';
+            if (fs.existsSync(reportPath)) {
+              const report = fs.readFileSync(reportPath, 'utf8');
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: report
+              });
+            }
+
+      - name: Check for Critical Alerts
+        if: steps.squad.outputs.critical-alerts > 0
+        run: |
+          echo "::error::Found ${{ steps.squad.outputs.critical-alerts }} critical security alerts!"
+          exit 1

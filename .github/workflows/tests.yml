@@ -1,0 +1,121 @@
+---
+name: Tests
+
+on:
+  workflow_call:
+
+jobs:
+  source-protection:
+    uses: ./.github/workflows/source-protection.yml
+    with:
+      commitlint-config: '.github/commitlint.config.cjs'
+      yamllint-config: '.github/.yamllintrc.yml'
+
+  docker-lint:
+    name: Lint Dockerfile
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+
+      - name: Run Hadolint
+        uses: hadolint/hadolint-action@2332a7b74a6de0dda2e2221d575162eba76ba5e5
+        with:
+          dockerfile: Dockerfile
+          failure-threshold: warning
+
+  shellcheck:
+    name: Lint Shell Scripts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38
+        with:
+          scandir: './scripts'
+          severity: warning
+
+  docker-build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [docker-lint, shellcheck]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
+
+      - name: Build Docker image
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: squad:test
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Docker image
+        run: |
+          docker run --rm --entrypoint /bin/bash squad:test -c "which gh && which jq && which git && echo '✅ Dependencies verified'"
+
+  test-action:
+    runs-on: ubuntu-latest
+    name: Test Squad Action
+    needs: [docker-build, source-protection]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+
+      - name: Create report directory
+        run: mkdir -p test-report && chmod 777 test-report
+
+      - name: Test Squad Action
+        id: test-squad
+        uses: ./
+        with:
+          owner: ${{ github.repository_owner }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          report-path: './test-report'
+
+      - name: Verify Report Generated
+        run: |
+          if [ ! -d "./test-report" ]; then
+            echo "::error::Report directory not created"
+            exit 1
+          fi
+
+          if [ ! -f "./test-report/report_summary.md" ]; then
+            echo "::error::Report summary not created"
+            exit 1
+          fi
+
+          echo "✅ Report generated successfully"
+
+      - name: Display Test Results
+        run: |
+          echo "## 📊 Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Alerts:** ${{ steps.test-squad.outputs.total-alerts }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Critical Alerts:** ${{ steps.test-squad.outputs.critical-alerts }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Repos:** ${{ steps.test-squad.outputs.total-repos }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Users:** ${{ steps.test-squad.outputs.total-users }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📄 Report Preview" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          head -n 50 ./test-report/report_summary.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Test Report
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: test-report-${{ github.sha }}
+          path: test-report/
+          retention-days: 7

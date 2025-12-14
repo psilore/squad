@@ -1,0 +1,47 @@
+---
+name: Release
+
+"on":
+  workflow_run:
+    workflows: ['Deploy']
+    types:
+      - completed
+
+permissions:
+  actions: 'read'
+  contents: 'write'
+  issues: 'write'
+  pull-requests: 'write'
+  id-token: 'write'
+  checks: 'write'
+  statuses: 'write'
+
+jobs:
+  gate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Conclusion
+        run: |
+          CONCLUSION="${{ github.event.workflow_run.conclusion }}"
+          if [[ "$CONCLUSION" == 'success' ]]; then
+            echo "Workflow succeeded"
+            exit 0
+          else
+            echo "
+            ### 🚫 Deployment Failed!
+
+            **See job:**
+            | Name | Workflow | Run ID | Environment |
+            | --- | --- | --- | --- |
+            | ${{ github.event.repository.name }} | \
+            [${{ github.repository }}/actions/workflows/deploy.yml]\
+            (${{ github.event.workflow_run.html_url }}) | \
+            ${{ github.event.workflow_run.run_number }} | prod |
+            " >> $GITHUB_STEP_SUMMARY
+            echo "Workflow failed"
+            exit 1
+          fi
+  semantic-release:
+    needs: [gate]
+    uses: ./.github/workflows/semantic-release.yml
+    secrets: inherit

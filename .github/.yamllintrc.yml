@@ -1,0 +1,10 @@
+---
+extends: default
+
+rules:
+  truthy:
+    check-keys: false
+  line-length:
+    max: 180  # Allow longer lines for GitHub Actions
+  comments:
+    min-spaces-from-content: 1  # Allow single space before comments
