@@ -114,7 +114,7 @@ jobs:
           head -n 50 ./test-report/report_summary.md >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Test Report
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           name: test-report-${{ github.sha }}
           path: test-report/
