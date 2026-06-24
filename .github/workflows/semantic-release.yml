@@ -36,7 +36,7 @@ jobs:
           token: ${{ secrets.GIT_USER_PAT }}
 
       - name: Slugify github variables
-        uses: rlespinasse/github-slug-action@9e7def61550737ba68c62d34a32dd31792e3f429
+        uses: rlespinasse/github-slug-action@e6f261660910b273384c5c42b17a0217881b217a
 
       - name: Semanitic Release
         uses: cycjimmy/semantic-release-action@b12c8f6015dc215fe37bc154d4ad456dd3833c90
