@@ -8,13 +8,14 @@ LABEL org.opencontainers.image.title="Squad GitHub Reporter" \
       org.opencontainers.image.licenses="MIT"
 
 # Install dependencies
+# hadolint ignore=DL3018
 RUN apk add --no-cache \
-    bash=5.3.3-r1 \
-    git=2.52.0-r0 \
-    curl=8.17.0-r1 \
-    jq=1.8.1-r0 \
-    coreutils=9.8-r1 \
-    github-cli=2.83.0-r1 \
+    bash \
+    git \
+    curl \
+    jq \
+    coreutils \
+    github-cli \
     && rm -rf /var/cache/apk/* \
     && rm -rf /tmp/*
 
