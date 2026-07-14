@@ -1,7 +1,7 @@
 # squad
 
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
-[![semantic-release](https://img.shields.io/badge/semantic-release-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
+[![release-please](https://img.shields.io/badge/release--please-active-brightgreen?logo=google-apis)](https://github.com/googleapis/release-please-action)
 [![Main](https://github.com/psilore/squad/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/psilore/squad/actions/workflows/main.yml)
 
 A GitHub Action that generates comprehensive reports about GitHub organizations and teams, including repositories, Dependabot alerts, pull requests, and team members.
