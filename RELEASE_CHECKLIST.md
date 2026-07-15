@@ -6,8 +6,7 @@ Use this checklist when preparing to release your Squad action.
 
 - [ ] All tests passing in `.github/workflows/test.yml`
 - [ ] Documentation reviewed and updated
-- [ ] CHANGELOG.md updated with changes
-- [ ] Version number decided (semver: MAJOR.MINOR.PATCH)
+- [ ] All commits since the last release follow the Conventional Commits format (e.g., `feat:`, `fix:`, `chore:`)
 - [ ] All TODO items completed
 - [ ] Security review completed
 
@@ -31,35 +30,27 @@ Use this checklist when preparing to release your Squad action.
 
 ## Release Process
 
-### 1. Update Version References
+We use **release-please** to fully automate our release process, including version bumps, generating `CHANGELOG.md` updates, creating Git tags, and publishing GitHub Releases.
 
-Update version in documentation:
-- [ ] README.md examples use new version
-- [ ] QUICKSTART.md examples use new version
+### 1. Merge to `main` with Conventional Commits
+All changes merged into `main` must use the [Conventional Commits](https://www.conventionalcommits.org/) standard. When you merge changes:
+- `feat:` commits will trigger a **Minor** version bump (e.g., `v1.0.1` to `v1.1.0`).
+- `fix:` commits will trigger a **Patch** version bump (e.g., `v1.0.1` to `v1.0.2`).
+- Commits containing `BREAKING CHANGE:` in the footer or `!` after the type/scope will trigger a **Major** version bump (e.g., `v1.0.1` to `v2.0.0`).
 
-### 2. Create Git Tag
+### 2. Release PR is Created/Updated
+Whenever a push to `main` happens, the `release-please-action` runs:
+- It scans the commit history since the last release.
+- It automatically creates or updates a pending **Release Pull Request** containing the updated `CHANGELOG.md` and the bumped version number.
 
-```bash
-# Create annotated tag
-git tag -a v1.0.0 -m "Release v1.0.0: Initial GitHub Action release"
-
-# Push tag
-git push origin v1.0.0
-
-# Create major version tag (for users who want latest v1.x)
-git tag -f v1
-git push -f origin v1
-```
-
-### 3. Create GitHub Release
-
-- [ ] Go to repository → Releases → New Release
-- [ ] Choose tag: v1.0.0
-- [ ] Release title: "v1.0.0 - Initial Release"
-- [ ] Description from CHANGELOG.md
-- [ ] Add highlights and breaking changes
-- [ ] Mark as latest release
-- [ ] Publish release
+### 3. Merge the Release PR
+To perform a release:
+- [ ] Review the open **Release PR** (titled `chore: release main`).
+- [ ] Check the generated `CHANGELOG.md` changes.
+- [ ] Merge the Release PR.
+- Once merged, the action will automatically:
+  - Create the corresponding Git tag (e.g., `v1.1.0`).
+  - Publish a new GitHub Release with the changelog as release notes.
 
 ### 4. Verify Marketplace Listing
 
