@@ -204,32 +204,21 @@ docker run --rm -e GITHUB_TOKEN="..." squad:test
 - Runs on: push, PR, manual
 - Validates: report generation, outputs
 
-## 🚀 Publishing to Marketplace
+## 🚀 Automated Publishing with Release Please
 
-### Steps to Publish:
+We use **release-please** to automate our versioning, changelog generation, tagging, and GitHub Releases.
 
-1. **Tag a Release**
-   ```bash
-   git tag -a v1.0.0 -m "Initial release"
-   git push origin v1.0.0
-   ```
+### How It Works:
 
-2. **Create GitHub Release**
-   - Go to Releases → New Release
-   - Select tag v1.0.0
-   - Add release notes
-   - Publish
-
-3. **Marketplace Submission**
-   - Action automatically appears in Marketplace
-   - Users can find via search
-   - Reference as `psilore/squad@v1`
+1. **Write Conventional Commits**: When making changes, use prefixes like `feat: ...`, `fix: ...`, or `chore: ...`.
+2. **Release PR**: The `.github/workflows/release-please.yml` workflow automatically maintains an open Release Pull Request that tracks all unreleased changes on `main`.
+3. **Automated Publishing**: Merging the Release PR automatically creates the Git tag (e.g., `v1.0.2`), generates the release notes, and publishes the new release to GitHub.
+4. **Marketplace Listing**: The action is instantly available in the GitHub Marketplace under the new version tag.
 
 ### Version Tags
-- `v1.0.0` - Specific version
-- `v1.0` - Minor version tracking
-- `v1` - Major version tracking
-- `main` - Latest development
+- `v1.0.0` - Specific semantic version (created automatically)
+- `v1` - Major version tracking (points to the latest minor/patch release of v1)
+- `main` - Latest development version
 
 ## 🔐 Security Considerations
 
